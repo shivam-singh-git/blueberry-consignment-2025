@@ -35,6 +35,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,6 +62,12 @@ import com.example.modernandroidapp.ui.screens.LoginScreen
 import com.example.modernandroidapp.ui.theme.ModernAndroidAppTheme
 import com.example.modernandroidapp.ui.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -192,10 +199,16 @@ fun RoleBasedMainScreen(currentUserRole: UserRole, onLogout: () -> Unit) {
 fun RealNavApp() {
     val navController = rememberNavController()
     val viewModel: MainViewModel = hiltViewModel()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val currentUserRole by viewModel.currentUserRole.collectAsStateWithLifecycle()
 
-    Log.d("RealNavApp", "isLoggedIn=$isLoggedIn, currentUserRole=$currentUserRole")
+    Log.d("RealNavApp", "isLoading=$isLoading, isLoggedIn=$isLoggedIn, currentUserRole=$currentUserRole")
+
+    if (isLoading) {
+        LoadingScreen()
+        return
+    }
 
     LaunchedEffect(isLoggedIn) {
         if (!isLoggedIn) {
@@ -227,6 +240,33 @@ fun RealNavApp() {
     }
 }
 
+@Composable
+fun LoadingScreen() {
+    val scale = remember { Animatable(0.5f) }
+    LaunchedEffect(key1 = true) {
+        scale.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 800,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
+            )
+        )
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.blueberry_logo),
+            contentDescription = "Loading Logo",
+            modifier = Modifier
+                .size(150.dp)
+                .scale(scale.value)
+        )
+    }
+}
 
 @Composable
 fun PlaceholderScreen(title: String, color: Color, buttonText: String, onClick: () -> Unit) {

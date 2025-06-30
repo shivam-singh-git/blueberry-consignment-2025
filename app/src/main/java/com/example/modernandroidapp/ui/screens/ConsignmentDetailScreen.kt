@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,6 +51,8 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +69,21 @@ fun ConsignmentDetailScreen(
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val currentUserRole by viewModel.currentUserRole.collectAsState()
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(consignmentId) { viewModel.loadConsignment(consignmentId) }
     LaunchedEffect(saveSuccess) { if (saveSuccess) onNavigateBack() }
+
+    if (showDeleteDialog) {
+        DeleteConfirmationDialog(
+            onConfirm = {
+                viewModel.deleteConsignment()
+                showDeleteDialog = false
+                onNavigateBack() // Navigate back after deletion
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
 
     Scaffold(
         containerColor = Color(0xFFF9FAFB),
@@ -106,6 +122,16 @@ fun ConsignmentDetailScreen(
                                 Icons.Filled.Save,
                                 contentDescription = "Save",
                                 tint = if (hasUnsavedChanges) Color(0xFF4F46E5) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    if (currentUserRole == com.example.modernandroidapp.data.UserRole.ADMIN) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Delete Consignment",
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -371,45 +397,59 @@ fun ConsignmentItemCard(
             }
             if (!isEditing) {
                 StatusAssistChip(isCompleted)
-            }
-            if (!isEditing) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "Delivered:",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = { if (item.deliveredQuantity > 0) onQuantityChange(item.deliveredQuantity - 1) },
-                        enabled = canEdit && item.deliveredQuantity > 0,
-                        modifier = Modifier.size(36.dp)
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Filled.Remove,
-                            contentDescription = "Decrease",
-                            tint = Color(0xFF4F46E5),
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    QuantityBox(
-                        value = item.deliveredQuantity,
-                        total = item.quantity
-                    )
-                    IconButton(
-                        onClick = { if (item.deliveredQuantity < item.quantity) onQuantityChange(item.deliveredQuantity + 1) },
-                        enabled = canEdit && item.deliveredQuantity < item.quantity,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "Increase",
-                            tint = Color(0xFF4F46E5),
-                            modifier = Modifier.size(18.dp)
+                        IconButton(
+                            onClick = { if (item.deliveredQuantity > 0) onQuantityChange(item.deliveredQuantity - 1) },
+                            enabled = canEdit && item.deliveredQuantity > 0,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Filled.Remove, "Decrease", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                        }
+                        QuantityBox(value = item.deliveredQuantity, total = item.quantity)
+                        IconButton(
+                            onClick = { if (item.deliveredQuantity < item.quantity) onQuantityChange(item.deliveredQuantity + 1) },
+                            enabled = canEdit && item.deliveredQuantity < item.quantity,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Filled.Add, "Increase", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        OutlinedTextField(
+                            value = item.deliveredQuantity.toString(),
+                            onValueChange = {
+                                val value = it.filter { c -> c.isDigit() }.toIntOrNull() ?: 0
+                                if (value <= item.quantity) {
+                                    onQuantityChange(value)
+                                }
+                            },
+                            placeholder = { Text("Manual") },
+                            modifier = Modifier
+                                .width(90.dp)
+                                .heightIn(max = 48.dp),
+                            enabled = canEdit,
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF4F46E5),
+                                unfocusedBorderColor = Color(0xFFCBD5E1)
+                            )
                         )
                     }
                 }
@@ -463,5 +503,27 @@ fun StatusAssistChip(isCompleted: Boolean) {
         ),
         border = null,
         modifier = Modifier.height(28.dp)
+    )
+}
+
+@Composable
+fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirm Deletion") },
+        text = { Text("Are you sure you want to delete this consignment? This action cannot be undone.") },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
     )
 } 

@@ -9,9 +9,7 @@ class AuthRepository @Inject constructor() {
     // Mock user database - in a real app, this would come from a remote API or local database
     private val users = listOf(
         User("admin", "admin123", UserRole.ADMIN),
-        User("staff", "staff123", UserRole.STAFF),
-        User("john", "john123", UserRole.STAFF),
-        User("sarah", "sarah123", UserRole.ADMIN)
+        User("staff", "staff123", UserRole.STAFF)
     )
 
     suspend fun login(username: String, password: String): User? {

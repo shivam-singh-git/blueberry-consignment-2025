@@ -132,8 +132,7 @@ public final class ConsignmentItemDao_Impl implements ConsignmentItemDao {
   }
 
   @Override
-  public Object insert(final ConsignmentItemEntity item,
-      final Continuation<? super Unit> $completion) {
+  public Object insert(final ConsignmentItemEntity item, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -147,12 +146,12 @@ public final class ConsignmentItemDao_Impl implements ConsignmentItemDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object insertAll(final List<ConsignmentItemEntity> items,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -166,12 +165,11 @@ public final class ConsignmentItemDao_Impl implements ConsignmentItemDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object update(final ConsignmentItemEntity item,
-      final Continuation<? super Unit> $completion) {
+  public Object update(final ConsignmentItemEntity item, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -185,12 +183,12 @@ public final class ConsignmentItemDao_Impl implements ConsignmentItemDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updateDeliveredQuantity(final String itemId, final int deliveredQuantity,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg2) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -217,7 +215,7 @@ public final class ConsignmentItemDao_Impl implements ConsignmentItemDao {
           __preparedStmtOfUpdateDeliveredQuantity.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override

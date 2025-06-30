@@ -65,6 +65,48 @@ class RoomConsignmentRepository @Inject constructor(
         }
     }
 
+    override suspend fun addConsignment(consignment: Consignment) {
+        val consignmentEntity = ConsignmentEntity(
+            id = consignment.id,
+            customerName = consignment.customerName,
+            completed = consignment.items.all { it.delivered }
+        )
+        val itemEntities = consignment.items.map {
+            ConsignmentItemEntity(
+                id = it.id,
+                consignmentId = consignment.id,
+                name = it.itemName,
+                description = it.description,
+                quantity = it.quantity,
+                deliveredQuantity = it.deliveredQuantity,
+                reminderFrequency = it.reminderFrequency.name
+            )
+        }
+        consignmentDao.insert(consignmentEntity)
+        consignmentItemDao.insertAll(itemEntities)
+    }
+
+    override suspend fun updateConsignment(consignment: Consignment) {
+        val consignmentEntity = ConsignmentEntity(
+            id = consignment.id,
+            customerName = consignment.customerName,
+            completed = consignment.items.all { it.delivered }
+        )
+        val itemEntities = consignment.items.map {
+            ConsignmentItemEntity(
+                id = it.id,
+                consignmentId = consignment.id,
+                name = it.itemName,
+                description = it.description,
+                quantity = it.quantity,
+                deliveredQuantity = it.deliveredQuantity,
+                reminderFrequency = it.reminderFrequency.name
+            )
+        }
+        consignmentDao.update(consignmentEntity)
+        consignmentItemDao.insertAll(itemEntities) // This will update existing items due to OnConflictStrategy.REPLACE
+    }
+
     suspend fun addConsignment(customerName: String, items: List<ConsignmentItem>) {
         val consignmentId = UUID.randomUUID().toString()
         val consignmentEntity = ConsignmentEntity(
@@ -183,5 +225,9 @@ class RoomConsignmentRepository @Inject constructor(
             delivered = this.deliveredQuantity >= this.quantity,
             reminderFrequency = ReminderFrequency.valueOf(this.reminderFrequency)
         )
+    }
+
+    override suspend fun deleteConsignment(consignmentId: String) {
+        consignmentDao.deleteConsignmentById(consignmentId)
     }
 } 

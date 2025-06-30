@@ -14,8 +14,7 @@ class InMemoryConsignmentRepository @Inject constructor() : ConsignmentRepositor
     private val _historyConsignments = MutableStateFlow<List<Consignment>>(emptyList())
     
     init {
-        // Add some sample data for testing
-        addSampleData()
+        // Sample data has been removed.
     }
     
     private fun addSampleData() {
@@ -133,6 +132,20 @@ class InMemoryConsignmentRepository @Inject constructor() : ConsignmentRepositor
         }
     }
 
+    override suspend fun addConsignment(consignment: Consignment) {
+        _consignments.value = _consignments.value + consignment
+    }
+
+    override suspend fun updateConsignment(consignment: Consignment) {
+        val allConsignments = (_consignments.value + _historyConsignments.value).toMutableList()
+        val index = allConsignments.indexOfFirst { it.id == consignment.id }
+        if (index != -1) {
+            allConsignments[index] = consignment
+            _consignments.value = allConsignments.filterNot { it.items.all { item -> item.delivered } }
+            _historyConsignments.value = allConsignments.filter { it.items.all { item -> item.delivered } }
+        }
+    }
+
     fun getHistoryConsignments(): Flow<List<Consignment>> {
         return _historyConsignments
     }
@@ -190,5 +203,10 @@ class InMemoryConsignmentRepository @Inject constructor() : ConsignmentRepositor
             currentList[consignmentIndex] = consignment.copy(items = updatedItems)
             _consignments.value = currentList
         }
+    }
+
+    override suspend fun deleteConsignment(consignmentId: String) {
+        _consignments.value = _consignments.value.filterNot { it.id == consignmentId }
+        _historyConsignments.value = _historyConsignments.value.filterNot { it.id == consignmentId }
     }
 } 

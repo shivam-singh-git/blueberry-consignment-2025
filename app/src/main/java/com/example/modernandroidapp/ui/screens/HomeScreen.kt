@@ -97,6 +97,9 @@ fun ModernConsignmentCard(
     consignment: com.example.modernandroidapp.data.Consignment,
     onConsignmentClick: (String) -> Unit
 ) {
+    // Performance Note: animate*AsState triggers recomposition for every animation frame.
+    // For high-performance scenarios, consider using lower-level APIs like Animatable
+    // or animations directly on the canvas in a DrawModifier to avoid recomposing the whole card.
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
@@ -112,6 +115,9 @@ fun ModernConsignmentCard(
         label = "cardElevation"
     )
     
+    // Performance Note: The .scale() modifier can be expensive. For list items,
+    // it's often better to avoid it if possible, or ensure that the content being
+    // scaled is simple.
     Surface(
         onClick = { onConsignmentClick(consignment.id) },
         modifier = Modifier
@@ -165,9 +171,11 @@ fun ModernConsignmentCard(
 
 @Composable
 fun ModernStatusBadge(consignment: com.example.modernandroidapp.data.Consignment) {
-    val isCompleted = consignment.items.all { it.delivered }
-    val completedItems = consignment.items.count { it.delivered }
-    
+    val (isCompleted, completedItems) = remember(consignment.items) {
+        val completed = consignment.items.count { it.delivered }
+        (consignment.items.all { it.delivered } to completed)
+    }
+
     val statusInfo = when {
         isCompleted -> StatusInfo(
             backgroundColor = status_completed,
@@ -253,6 +261,10 @@ fun ModernProgressIndicator(consignment: com.example.modernandroidapp.data.Consi
             shape = RoundedCornerShape(4.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
+            // Performance Note: Animating the width of a Box with a modifier is generally
+            // efficient, but for very complex layouts, this could still cause jank.
+            // Profiling with the Android Studio Profiler is the best way to confirm if
+            // this is a bottleneck.
             val animatedProgress by animateFloatAsState(
                 targetValue = progress,
                 animationSpec = spring(),

@@ -38,6 +38,8 @@ public final class ConsignmentDao_Impl implements ConsignmentDao {
 
   private final SharedSQLiteStatement __preparedStmtOfMarkAsCompleted;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteConsignmentById;
+
   public ConsignmentDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfConsignmentEntity = new EntityInsertionAdapter<ConsignmentEntity>(__db) {
@@ -108,6 +110,14 @@ public final class ConsignmentDao_Impl implements ConsignmentDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE consignments SET completed = 1, deliveryDate = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfDeleteConsignmentById = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM consignments WHERE id = ?";
         return _query;
       }
     };
@@ -184,6 +194,91 @@ public final class ConsignmentDao_Impl implements ConsignmentDao {
   }
 
   @Override
+  public Object deleteConsignmentById(final String consignmentId,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteConsignmentById.acquire();
+        int _argIndex = 1;
+        if (consignmentId == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, consignmentId);
+        }
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteConsignmentById.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Flow<List<ConsignmentEntity>> getAll() {
+    final String _sql = "SELECT * FROM consignments";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"consignments"}, new Callable<List<ConsignmentEntity>>() {
+      @Override
+      @NonNull
+      public List<ConsignmentEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfCustomerName = CursorUtil.getColumnIndexOrThrow(_cursor, "customerName");
+          final int _cursorIndexOfCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "completed");
+          final int _cursorIndexOfDeliveryDate = CursorUtil.getColumnIndexOrThrow(_cursor, "deliveryDate");
+          final List<ConsignmentEntity> _result = new ArrayList<ConsignmentEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final ConsignmentEntity _item;
+            final String _tmpId;
+            if (_cursor.isNull(_cursorIndexOfId)) {
+              _tmpId = null;
+            } else {
+              _tmpId = _cursor.getString(_cursorIndexOfId);
+            }
+            final String _tmpCustomerName;
+            if (_cursor.isNull(_cursorIndexOfCustomerName)) {
+              _tmpCustomerName = null;
+            } else {
+              _tmpCustomerName = _cursor.getString(_cursorIndexOfCustomerName);
+            }
+            final boolean _tmpCompleted;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfCompleted);
+            _tmpCompleted = _tmp != 0;
+            final Long _tmpDeliveryDate;
+            if (_cursor.isNull(_cursorIndexOfDeliveryDate)) {
+              _tmpDeliveryDate = null;
+            } else {
+              _tmpDeliveryDate = _cursor.getLong(_cursorIndexOfDeliveryDate);
+            }
+            _item = new ConsignmentEntity(_tmpId,_tmpCustomerName,_tmpCompleted,_tmpDeliveryDate);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
   public Flow<List<ConsignmentEntity>> getOngoing() {
     final String _sql = "SELECT * FROM consignments WHERE completed = 0";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -240,7 +335,7 @@ public final class ConsignmentDao_Impl implements ConsignmentDao {
 
   @Override
   public Flow<List<ConsignmentEntity>> getCompleted() {
-    final String _sql = "SELECT * FROM consignments WHERE completed = 1";
+    final String _sql = "SELECT * FROM consignments WHERE completed = 1 ORDER BY deliveryDate DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"consignments"}, new Callable<List<ConsignmentEntity>>() {
       @Override

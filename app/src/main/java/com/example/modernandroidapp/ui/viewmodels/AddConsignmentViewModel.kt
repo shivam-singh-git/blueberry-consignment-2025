@@ -1,20 +1,28 @@
 package com.example.modernandroidapp.ui.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.modernandroidapp.data.ConsignmentItem
 import com.example.modernandroidapp.data.RoomConsignmentRepository
 import com.example.modernandroidapp.data.ReminderFrequency
+import com.example.modernandroidapp.data.workers.ReminderWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class AddConsignmentViewModel @Inject constructor(
-    private val repository: RoomConsignmentRepository
+    private val repository: RoomConsignmentRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     var customerName by mutableStateOf("")
         private set
@@ -69,10 +77,34 @@ class AddConsignmentViewModel @Inject constructor(
         }
         viewModelScope.launch {
             repository.addConsignment(customerName, itemsToAdd)
+            scheduleReminders(customerName, itemsToAdd)
             submitSuccess = true
             // Reset form
             customerName = ""
             items = listOf(ConsignmentItem())
+        }
+    }
+
+    private fun scheduleReminders(consignmentName: String, items: List<ConsignmentItem>) {
+        val workManager = WorkManager.getInstance(context)
+
+        items.forEach { item ->
+            val repeatInterval = when (item.reminderFrequency) {
+                ReminderFrequency.DAILY -> 1L
+                ReminderFrequency.WEEKLY -> 7L
+            }
+
+            val data = Data.Builder()
+                .putString(ReminderWorker.KEY_CONSIGNMENT_NAME, consignmentName)
+                .putString(ReminderWorker.KEY_ITEM_NAME, item.itemName)
+                .build()
+
+            val reminderRequest =
+                PeriodicWorkRequestBuilder<ReminderWorker>(repeatInterval, TimeUnit.DAYS)
+                    .setInputData(data)
+                    .build()
+
+            workManager.enqueue(reminderRequest)
         }
     }
 } 

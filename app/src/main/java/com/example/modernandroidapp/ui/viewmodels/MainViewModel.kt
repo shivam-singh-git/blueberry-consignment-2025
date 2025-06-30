@@ -18,6 +18,9 @@ class MainViewModel @Inject constructor(
     private val userSessionManager: UserSessionManager
 ) : ViewModel() {
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
@@ -28,26 +31,22 @@ class MainViewModel @Inject constructor(
     val currentUserRole: StateFlow<UserRole?> = _currentUserRole.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            combine(
-                userSessionManager.isLoggedIn,
-                userSessionManager.currentUsername,
-                userSessionManager.currentUserRole
-            ) { isLoggedIn, username, role ->
-                Triple(isLoggedIn, username, role)
-            }.collect { (isLoggedIn, username, role) ->
-                _isLoggedIn.value = isLoggedIn
-                _currentUsername.value = username
-                _currentUserRole.value = role
-            }
-        }
+        checkLoginStatus()
     }
 
-    fun checkSessionOnLaunch() {
+    private fun checkLoginStatus() {
         viewModelScope.launch {
-            val role = userSessionManager.currentUserRole.first()
-            _currentUserRole.value = role
-            _isLoggedIn.value = role != null
+            userSessionManager.isLoggedIn.collect { loggedIn ->
+                _isLoggedIn.value = loggedIn
+                if (loggedIn) {
+                    userSessionManager.currentUserRole.collect { role ->
+                        _currentUserRole.value = role
+                        _isLoading.value = false
+                    }
+                } else {
+                    _isLoading.value = false
+                }
+            }
         }
     }
 

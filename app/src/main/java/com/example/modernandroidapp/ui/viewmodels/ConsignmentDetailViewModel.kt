@@ -194,4 +194,15 @@ class ConsignmentDetailViewModel @Inject constructor(
     fun canEdit(): Boolean {
         return _currentUserRole.value == UserRole.ADMIN
     }
+
+    fun deleteConsignment() {
+        val consignmentId = _consignment.value?.id ?: return
+        viewModelScope.launch {
+            try {
+                roomRepository.deleteConsignment(consignmentId)
+            } catch (e: Exception) {
+                // Handle error if needed
+            }
+        }
+    }
 } 
