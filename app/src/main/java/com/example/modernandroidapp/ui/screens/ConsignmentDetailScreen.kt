@@ -44,6 +44,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,105 +150,41 @@ fun ConsignmentDetailScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Modern animated dots loading indicator
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        repeat(3) { index ->
-                            val infiniteTransition = rememberInfiniteTransition()
-                            val scale by infiniteTransition.animateFloat(
-                                initialValue = 0.3f,
-                                targetValue = 1f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(600, delayMillis = index * 200),
-                                    repeatMode = RepeatMode.Reverse
-                                )
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .scale(scale)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = CircleShape
-                                    )
-                            )
-                        }
-                    }
-                    Text(
-                        text = "Loading consignment...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             consignment?.let { consignment ->
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = slideInVertically(
-                                initialOffsetY = { -it },
-                                animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
-                            ) + fadeIn(animationSpec = tween(600))
-                        ) {
-                            CustomerInfoCard(
-                                consignment = consignment,
-                                currentUserRole = currentUserRole,
-                                viewModel = viewModel
-                            )
-                        }
+                        CustomerInfoRow(
+                            consignment = consignment,
+                            currentUserRole = currentUserRole,
+                            viewModel = viewModel
+                        )
                     }
-                    
                     item {
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(800)) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = spring(dampingRatio = 0.7f, stiffness = 200f)
-                            )
-                        ) {
-                            ItemsHeader()
-                        }
+                        ItemsHeader()
                     }
-                    
                     itemsIndexed(
                         items = consignment.items,
                         key = { index, item -> "${item.id}_$index" }
                     ) { index, item ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(600)) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = spring(
-                                    dampingRatio = 0.8f,
-                                    stiffness = 250f,
-                                    visibilityThreshold = null
-                                )
-                            )
-                        ) {
-                            ItemStepperCard(
-                                item = item,
-                                index = index,
-                                currentUserRole = currentUserRole,
-                                viewModel = viewModel,
-                                onQuantityChange = { newQuantity ->
-                                    viewModel.updateDeliveredQuantity(index, newQuantity)
-                                }
-                            )
-                        }
+                        ModernItemDetailCard(
+                            item = item,
+                            index = index,
+                            currentUserRole = currentUserRole,
+                            viewModel = viewModel,
+                            onQuantityChange = { newQuantity ->
+                                viewModel.updateDeliveredQuantity(index, newQuantity)
+                            }
+                        )
                     }
                 }
             }
@@ -255,7 +193,7 @@ fun ConsignmentDetailScreen(
 }
 
 @Composable
-fun CustomerInfoCard(
+fun CustomerInfoRow(
     consignment: com.example.modernandroidapp.data.Consignment,
     currentUserRole: com.example.modernandroidapp.data.UserRole?,
     viewModel: ConsignmentDetailViewModel
@@ -269,450 +207,164 @@ fun CustomerInfoCard(
     
     val canEdit = currentUserRole == com.example.modernandroidapp.data.UserRole.ADMIN
     
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
-        ),
-        shape = MaterialTheme.shapes.medium
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.padding(24.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+        Icon(
+            imageVector = Icons.Filled.Person,
+            contentDescription = "Customer",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        if (isEditing && canEdit) {
+            OutlinedTextField(
+                value = editedCustomerName,
+                onValueChange = { editedCustomerName = it },
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = MaterialTheme.shapes.small,
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    viewModel.updateCustomerName(editedCustomerName)
+                    isEditing = false
+                }
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Customer",
+                    Icons.Filled.Save,
+                    contentDescription = "Save",
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                if (isEditing && canEdit) {
-                    OutlinedTextField(
-                        value = editedCustomerName,
-                        onValueChange = { editedCustomerName = it },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary
-                        ),
-                        shape = MaterialTheme.shapes.small,
-                        singleLine = true
+            }
+        } else {
+            Text(
+                text = consignment.customerName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            if (canEdit) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = { isEditing = true }
+                ) {
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = "Edit",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            viewModel.updateCustomerName(editedCustomerName)
-                            isEditing = false
-                        }
-                    ) {
-                        Icon(
-                            Icons.Filled.Save,
-                            contentDescription = "Save",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                } else {
-                    Text(
-                        text = consignment.customerName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (canEdit) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(
-                            onClick = { isEditing = true }
-                        ) {
-                            Icon(
-                                Icons.Filled.Edit,
-                                contentDescription = "Edit",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Inventory,
-                    contentDescription = "Items",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "${consignment.items.size} items",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
+        Spacer(modifier = Modifier.width(16.dp))
+        Icon(
+            imageVector = Icons.Filled.Inventory,
+            contentDescription = "Items",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = "${consignment.items.size} items",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 fun ItemsHeader() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Inventory,
-            contentDescription = "Items",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            "Items",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+    Text(
+        "Items",
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
 }
 
 @Composable
-fun ItemStepperCard(
+fun ModernItemDetailCard(
     item: com.example.modernandroidapp.data.ConsignmentItem,
     index: Int,
     currentUserRole: com.example.modernandroidapp.data.UserRole?,
     viewModel: ConsignmentDetailViewModel,
     onQuantityChange: (Int) -> Unit
 ) {
-    // Derived state to avoid recomposition when only completion status changes
     val isCompleted by remember(item.deliveredQuantity, item.quantity) {
         derivedStateOf { item.deliveredQuantity >= item.quantity }
     }
     
-    // Animate completion status
-    val completionColor by animateColorAsState(
-        targetValue = if (isCompleted) 
-            MaterialTheme.colorScheme.primaryContainer 
-        else 
-            MaterialTheme.colorScheme.surfaceVariant,
-        animationSpec = tween(300),
-        label = "completionColor"
-    )
-    
-    val completionTextColor by animateColorAsState(
-        targetValue = if (isCompleted) 
-            MaterialTheme.colorScheme.onPrimaryContainer 
-        else 
-            MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(300),
-        label = "completionTextColor"
-    )
-    
-    // Animate quantity changes
-    val animatedQuantity by animateFloatAsState(
-        targetValue = item.deliveredQuantity.toFloat(),
-        animationSpec = spring(
-            dampingRatio = 0.8f,
-            stiffness = 300f
-        ),
-        label = "quantity"
-    )
-    
     val canEdit = currentUserRole == com.example.modernandroidapp.data.UserRole.ADMIN
     
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = MaterialTheme.shapes.medium
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        Column(Modifier.padding(24.dp)) {
+        Column(Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    if (canEdit) {
-                        var isEditingName by remember { mutableStateOf(false) }
-                        var editedItemName by remember { mutableStateOf(item.itemName) }
-                        
-                        LaunchedEffect(item.itemName) {
-                            editedItemName = item.itemName
-                        }
-                        
-                        if (isEditingName) {
-                            OutlinedTextField(
-                                value = editedItemName,
-                                onValueChange = { editedItemName = it },
-                                label = { Text("Item Name") },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = MaterialTheme.shapes.small,
-                                singleLine = true
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.updateItemName(index, editedItemName)
-                                        isEditingName = false
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Save,
-                                        contentDescription = "Save",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                IconButton(
-                                    onClick = { isEditingName = false }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Close,
-                                        contentDescription = "Cancel",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = item.itemName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = { isEditingName = true }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Edit,
-                                        contentDescription = "Edit Name",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        var isEditingDescription by remember { mutableStateOf(false) }
-                        var editedDescription by remember { mutableStateOf(item.description) }
-                        
-                        LaunchedEffect(item.description) {
-                            editedDescription = item.description
-                        }
-                        
-                        if (isEditingDescription) {
-                            OutlinedTextField(
-                                value = editedDescription,
-                                onValueChange = { editedDescription = it },
-                                label = { Text("Description (Optional)") },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = MaterialTheme.shapes.small
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.updateItemDescription(index, editedDescription)
-                                        isEditingDescription = false
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Save,
-                                        contentDescription = "Save",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                IconButton(
-                                    onClick = { isEditingDescription = false }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Close,
-                                        contentDescription = "Cancel",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = item.description.ifEmpty { "No description" },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = { isEditingDescription = true }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Edit,
-                                        contentDescription = "Edit Description",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        var isEditingQuantity by remember { mutableStateOf(false) }
-                        var editedQuantity by remember { mutableStateOf(item.quantity.toString()) }
-                        
-                        LaunchedEffect(item.quantity) {
-                            editedQuantity = item.quantity.toString()
-                        }
-                        
-                        if (isEditingQuantity) {
-                            OutlinedTextField(
-                                value = editedQuantity,
-                                onValueChange = { editedQuantity = it },
-                                label = { Text("Total Quantity") },
-                                modifier = Modifier.width(120.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = MaterialTheme.shapes.small,
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                                ),
-                                singleLine = true
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                        val newQuantity = editedQuantity.toIntOrNull() ?: item.quantity
-                                        viewModel.updateItemQuantity(index, newQuantity)
-                                        isEditingQuantity = false
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Save,
-                                        contentDescription = "Save",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                IconButton(
-                                    onClick = { isEditingQuantity = false }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Close,
-                                        contentDescription = "Cancel",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Total: ${item.quantity}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                IconButton(
-                                    onClick = { isEditingQuantity = true }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Edit,
-                                        contentDescription = "Edit Quantity",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
+                    Text(
+                        text = item.itemName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (item.description.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = item.itemName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = item.description.ifEmpty { "No description" },
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = item.description,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                
-                // Animated Status Badge
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
-                        initialOffsetY = { -it / 2 },
-                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f)
-                    )
-                ) {
-                    Surface(
-                        color = completionColor,
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isCompleted) Icons.Filled.CheckCircle else Icons.Filled.Pending,
-                                contentDescription = if (isCompleted) "Completed" else "Pending",
-                                tint = completionTextColor,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isCompleted) "Complete" else "Pending",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = completionTextColor,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            if (isCompleted) "Complete" else "Pending",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (isCompleted) Icons.Filled.CheckCircle else Icons.Filled.Pending,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = if (isCompleted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = if (isCompleted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    border = null
+                )
             }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Quantity Controls
+            Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -721,145 +373,68 @@ fun ItemStepperCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
                 )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Enhanced Decrease Button
-                    AnimatedStepperButton(
-                        onClick = { 
-                            if (item.deliveredQuantity > 0) {
-                                onQuantityChange(item.deliveredQuantity - 1)
-                            }
-                        },
-                        enabled = item.deliveredQuantity > 0,
-                        icon = Icons.Filled.Remove,
-                        contentDescription = "Decrease",
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    
-                    Spacer(modifier = Modifier.width(20.dp))
-                    
-                    // Manual Quantity Input
-                    var manualInput by remember { mutableStateOf(item.deliveredQuantity.toString()) }
-                    var isInputValid by remember { mutableStateOf(true) }
-                    
-                    LaunchedEffect(item.deliveredQuantity) {
-                        manualInput = item.deliveredQuantity.toString()
-                    }
-                    
-                    OutlinedTextField(
-                        value = manualInput,
-                        onValueChange = { input ->
-                            manualInput = input
-                            val newQuantity = input.toIntOrNull()
-                            if (newQuantity != null && newQuantity >= 0 && newQuantity <= item.quantity) {
-                                isInputValid = true
-                                onQuantityChange(newQuantity)
-                            } else {
-                                isInputValid = false
-                            }
-                        },
-                        label = { Text("Qty") },
-                        modifier = Modifier.width(80.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (isInputValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            unfocusedBorderColor = if (isInputValid) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.error,
-                            focusedLabelColor = if (isInputValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        ),
-                        shape = MaterialTheme.shapes.small,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        ),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Text(
-                        text = "/${item.quantity}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.width(20.dp))
-                    
-                    // Enhanced Increase Button
-                    AnimatedStepperButton(
-                        onClick = { 
-                            if (item.deliveredQuantity < item.quantity) {
-                                onQuantityChange(item.deliveredQuantity + 1)
-                            }
-                        },
-                        enabled = item.deliveredQuantity < item.quantity,
-                        icon = Icons.Filled.Add,
-                        contentDescription = "Increase",
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+                ModernStepper(
+                    value = item.deliveredQuantity,
+                    range = 0..item.quantity,
+                    onValueChange = onQuantityChange,
+                    enabled = canEdit || currentUserRole == com.example.modernandroidapp.data.UserRole.STAFF
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "/${item.quantity}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
 
 @Composable
-fun AnimatedStepperButton(
-    onClick: () -> Unit,
-    enabled: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    contentDescription: String,
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color
+fun ModernStepper(
+    value: Int,
+    range: IntRange,
+    onValueChange: (Int) -> Unit,
+    enabled: Boolean
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    
-    // Animate scale on press
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled) 0.9f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.8f,
-            stiffness = 400f
-        ),
-        label = "scale"
-    )
-    
-    // Animate elevation on press
-    val elevation by animateFloatAsState(
-        targetValue = if (isPressed && enabled) 8f else 2f,
-        animationSpec = spring(
-            dampingRatio = 0.8f,
-            stiffness = 400f
-        ),
-        label = "elevation"
-    )
-    
-    // Animate alpha for disabled state
-    val alpha by animateFloatAsState(
-        targetValue = if (enabled) 1f else 0.5f,
-        animationSpec = tween(200),
-        label = "alpha"
-    )
-    
-    FloatingActionButton(
-        onClick = onClick,
-        modifier = Modifier
-            .size(44.dp)
-            .scale(scale),
-        containerColor = containerColor,
-        contentColor = contentColor,
-        shape = CircleShape,
-        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = elevation.dp),
-        interactionSource = interactionSource
-    ) {
-        Icon(
-            icon,
-            contentDescription = contentDescription,
-            modifier = Modifier
-                .size(20.dp)
-                .graphicsLayer(alpha = alpha)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(
+            onClick = { if (value > range.first) onValueChange(value - 1) },
+            enabled = enabled && value > range.first
+        ) {
+            Icon(
+                Icons.Filled.Remove,
+                contentDescription = "Decrease",
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        OutlinedTextField(
+            value = value.toString(),
+            onValueChange = {
+                val newValue = it.toIntOrNull()
+                if (newValue != null && newValue in range) onValueChange(newValue)
+            },
+            modifier = Modifier.width(56.dp),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
+            singleLine = true,
+            enabled = enabled,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.primary
+            ),
+            shape = MaterialTheme.shapes.small
         )
+        IconButton(
+            onClick = { if (value < range.last) onValueChange(value + 1) },
+            enabled = enabled && value < range.last
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = "Increase",
+                modifier = Modifier.size(18.dp)
+            )
+        }
     }
 } 
