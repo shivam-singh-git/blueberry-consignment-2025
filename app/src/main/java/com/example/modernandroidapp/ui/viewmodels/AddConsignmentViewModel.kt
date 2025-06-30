@@ -77,7 +77,6 @@ class AddConsignmentViewModel @Inject constructor(
         }
         viewModelScope.launch {
             repository.addConsignment(customerName, itemsToAdd)
-            scheduleReminders(customerName, itemsToAdd)
             submitSuccess = true
             // Reset form
             customerName = ""
