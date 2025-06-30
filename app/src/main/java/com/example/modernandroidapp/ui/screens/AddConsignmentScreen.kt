@@ -87,45 +87,55 @@ fun AddConsignmentScreen(
                 .padding(top = padding.calculateTopPadding()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Customer Name",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
-            OutlinedTextField(
-                value = customerName,
-                onValueChange = { viewModel.onCustomerNameChange(it) },
-                label = { Text("Enter customer name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
-            Text(
-                text = "Items",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
-            items.forEachIndexed { index, item ->
-                AddConsignmentItemCard(
-                    item = item,
-                    onItemChange = { viewModel.onItemChange(index, it) },
-                    onRemove = { viewModel.removeItem(index) },
-                    canRemove = items.size > 1
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                item {
+                    Text(
+                        text = "Customer Name",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                    )
+                }
+                item {
+                    OutlinedTextField(
+                        value = customerName,
+                        onValueChange = { viewModel.onCustomerNameChange(it) },
+                        label = { Text("Enter customer name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+                }
+                item {
+                    Text(
+                        text = "Items",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                    )
+                }
+                itemsIndexed(items) { index, item ->
+                    AddConsignmentItemCard(
+                        item = item,
+                        onItemChange = { viewModel.onItemChange(index, it) },
+                        onRemove = { viewModel.removeItem(index) },
+                        canRemove = items.size > 1
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                item {
+                    OutlinedButton(
+                        onClick = { viewModel.addItem() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add Item", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
-            OutlinedButton(
-                onClick = { viewModel.addItem() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Item", style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(modifier = Modifier.weight(1f))
+
             if (validationError != null) {
                 Text(
                     text = validationError,
