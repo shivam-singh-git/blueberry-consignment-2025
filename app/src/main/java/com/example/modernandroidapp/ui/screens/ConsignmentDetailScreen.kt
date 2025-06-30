@@ -86,14 +86,12 @@ fun ConsignmentDetailScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF9FAFB),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "Consignment Details",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
@@ -101,7 +99,6 @@ fun ConsignmentDetailScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -121,7 +118,7 @@ fun ConsignmentDetailScreen(
                             Icon(
                                 Icons.Filled.Save,
                                 contentDescription = "Save",
-                                tint = if (hasUnsavedChanges) Color(0xFF4F46E5) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (hasUnsavedChanges) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -136,20 +133,9 @@ fun ConsignmentDetailScreen(
                             )
                         }
                     }
-                    IconButton(onClick = onLogout) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "Logout",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -161,14 +147,13 @@ fun ConsignmentDetailScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(0xFF4F46E5))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             consignment?.let { consignment ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFF9FAFB))
                         .padding(top = padding.calculateTopPadding())
                 ) {
                     ConsignmentTitleCard(
@@ -187,7 +172,6 @@ fun ConsignmentDetailScreen(
                             Text(
                                 "Items",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
                             )
                         }
@@ -227,7 +211,7 @@ fun ConsignmentTitleCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -237,7 +221,7 @@ fun ConsignmentTitleCard(
             Icon(
                 imageVector = Icons.Filled.Person,
                 contentDescription = null,
-                tint = Color(0xFF4F46E5),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -250,8 +234,8 @@ fun ConsignmentTitleCard(
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4F46E5),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         modifier = Modifier.fillMaxWidth(0.85f)
                     )
@@ -280,7 +264,7 @@ fun ConsignmentTitleCard(
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,
                             contentDescription = "Save Name",
-                            tint = Color(0xFF4F46E5),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -291,7 +275,7 @@ fun ConsignmentTitleCard(
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = "Edit Name",
-                            tint = Color(0xFF4F46E5),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -306,19 +290,20 @@ fun ConsignmentItemCard(
     item: com.example.modernandroidapp.data.ConsignmentItem,
     canEdit: Boolean,
     onQuantityChange: (Int) -> Unit,
-    onItemEdit: (String, String, Int) -> Unit = { _, _, _ -> }
+    onItemEdit: (String, String, Int) -> Unit
 ) {
-    val isCompleted = item.deliveredQuantity >= item.quantity
     var isEditing by remember { mutableStateOf(false) }
-    var editedName by remember { mutableStateOf(item.itemName) }
-    var editedDescription by remember { mutableStateOf(item.description) }
-    var editedQuantity by remember { mutableStateOf(item.quantity) }
+    var editedName by remember(item.itemName) { mutableStateOf(item.itemName) }
+    var editedDescription by remember(item.description) { mutableStateOf(item.description) }
+    var editedQuantity by remember(item.quantity) { mutableStateOf(item.quantity) }
+    var quantityText by remember(item.deliveredQuantity) { mutableStateOf(item.deliveredQuantity.toString()) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -350,7 +335,7 @@ fun ConsignmentItemCard(
                             Text("Quantity:", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.width(8.dp))
                             IconButton(onClick = { if (editedQuantity > 1) editedQuantity-- }, enabled = editedQuantity > 1) {
-                                Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                                Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                             }
                             OutlinedTextField(
                                 value = editedQuantity.toString(),
@@ -360,7 +345,7 @@ fun ConsignmentItemCard(
                                 singleLine = true
                             )
                             IconButton(onClick = { editedQuantity++ }) {
-                                Icon(Icons.Filled.Add, contentDescription = "Increase", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                                Icon(Icons.Filled.Add, contentDescription = "Increase", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                             }
                         }
                     } else {
@@ -386,72 +371,42 @@ fun ConsignmentItemCard(
                             onItemEdit(editedName, editedDescription, editedQuantity)
                             isEditing = false
                         }) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = "Save Item", tint = Color(0xFF4F46E5), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Filled.CheckCircle, contentDescription = "Save Item", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                         }
                     } else {
                         IconButton(onClick = { isEditing = true }) {
-                            Icon(Icons.Outlined.Edit, contentDescription = "Edit Item", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Outlined.Edit, contentDescription = "Edit Item", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
             }
             if (!isEditing) {
-                StatusAssistChip(isCompleted)
-                Spacer(modifier = Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Delivered:",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                        color = MaterialTheme.colorScheme.onSurface
+                    OutlinedTextField(
+                        value = quantityText,
+                        onValueChange = { newValue ->
+                            if (newValue.all { it.isDigit() }) {
+                                quantityText = newValue
+                                val newQuantity = newValue.toIntOrNull() ?: 0
+                                onQuantityChange(newQuantity)
+                            }
+                        },
+                        label = { Text("Delivered") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(8.dp)
                     )
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = { if (item.deliveredQuantity > 0) onQuantityChange(item.deliveredQuantity - 1) },
-                            enabled = canEdit && item.deliveredQuantity > 0,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(Icons.Filled.Remove, "Decrease", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
-                        }
-                        QuantityBox(value = item.deliveredQuantity, total = item.quantity)
-                        IconButton(
-                            onClick = { if (item.deliveredQuantity < item.quantity) onQuantityChange(item.deliveredQuantity + 1) },
-                            enabled = canEdit && item.deliveredQuantity < item.quantity,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(Icons.Filled.Add, "Increase", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        OutlinedTextField(
-                            value = item.deliveredQuantity.toString(),
-                            onValueChange = {
-                                val value = it.filter { c -> c.isDigit() }.toIntOrNull() ?: 0
-                                if (value <= item.quantity) {
-                                    onQuantityChange(value)
-                                }
-                            },
-                            placeholder = { Text("Manual") },
-                            modifier = Modifier
-                                .width(90.dp)
-                                .heightIn(max = 48.dp),
-                            enabled = canEdit,
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF4F46E5),
-                                unfocusedBorderColor = Color(0xFFCBD5E1)
-                            )
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        "${item.deliveredQuantity} / ${item.quantity}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
@@ -464,8 +419,8 @@ fun QuantityBox(value: Int, total: Int) {
         modifier = Modifier
             .height(36.dp)
             .padding(horizontal = 2.dp)
-            .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-            .background(Color.White, RoundedCornerShape(8.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -498,8 +453,8 @@ fun StatusAssistChip(isCompleted: Boolean) {
             )
         },
         colors = AssistChipDefaults.assistChipColors(
-            containerColor = if (isCompleted) Color(0xFFE0E7FF) else Color(0xFFF1F5F9),
-            labelColor = if (isCompleted) Color(0xFF4F46E5) else Color(0xFF64748B)
+            containerColor = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = if (isCompleted) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
         ),
         border = null,
         modifier = Modifier.height(28.dp)

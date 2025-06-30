@@ -66,19 +66,16 @@ fun AddConsignmentScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF9FAFB),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "Add Consignment",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -86,7 +83,6 @@ fun AddConsignmentScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF9FAFB))
                 .padding(horizontal = 16.dp)
                 .padding(top = padding.calculateTopPadding()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -94,25 +90,19 @@ fun AddConsignmentScreen(
             Text(
                 text = "Customer Name",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
             )
             OutlinedTextField(
                 value = customerName,
                 onValueChange = { viewModel.onCustomerNameChange(it) },
-                label = { Text("Enter customer name", fontSize = 14.sp, color = Color.Gray) },
+                label = { Text("Enter customer name") },
                 modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF4F46E5),
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
-                ),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
             )
             Text(
                 text = "Items",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
             )
             items.forEachIndexed { index, item ->
@@ -129,11 +119,7 @@ fun AddConsignmentScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color(0xFFE0E7FF),
-                    contentColor = Color(0xFF4F46E5)
-                )
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Icon(Icons.Filled.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -154,12 +140,11 @@ fun AddConsignmentScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Icon(Icons.Filled.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Submit Consignment", style = MaterialTheme.typography.bodyLarge.copy(color = Color.White))
+                Text("Submit Consignment")
             }
         }
     }
@@ -172,12 +157,16 @@ fun AddConsignmentItemCard(
     onRemove: () -> Unit,
     canRemove: Boolean
 ) {
+    var quantityText by remember(item.quantity) {
+        mutableStateOf(if (item.quantity > 0) item.quantity.toString() else "")
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -195,60 +184,39 @@ fun AddConsignmentItemCard(
             OutlinedTextField(
                 value = item.itemName,
                 onValueChange = { onItemChange(item.copy(itemName = it)) },
-                label = { Text("Item Name", fontSize = 14.sp, color = Color.Gray) },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF4F46E5),
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
-                ),
+                label = { Text("Item Name") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
             )
             OutlinedTextField(
                 value = item.description,
                 onValueChange = { onItemChange(item.copy(description = it)) },
-                label = { Text("Description (optional)", fontSize = 12.sp, color = Color.Gray) },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF4F46E5),
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
-                ),
+                label = { Text("Description (optional)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 shape = RoundedCornerShape(12.dp)
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Quantity:", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), color = MaterialTheme.colorScheme.onSurface)
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = { if (item.quantity > 1) onItemChange(item.copy(quantity = item.quantity - 1)) },
-                    enabled = item.quantity > 1,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
-                }
-                Box(
-                    modifier = Modifier
-                        .height(36.dp)
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = item.quantity.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                IconButton(
-                    onClick = { onItemChange(item.copy(quantity = item.quantity + 1)) },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Increase", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
-                }
-            }
-            // Reminder Frequency Dropdown (optional, can be added here if needed)
+            OutlinedTextField(
+                value = quantityText,
+                onValueChange = { newValue ->
+                    if (newValue.all { it.isDigit() }) {
+                        quantityText = newValue
+                        val newQuantity = newValue.toIntOrNull() ?: 0
+                        onItemChange(item.copy(quantity = newQuantity))
+                    }
+                },
+                label = { Text("Quantity") },
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
         }
     }
 }
