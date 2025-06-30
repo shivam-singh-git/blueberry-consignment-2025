@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.modernandroidapp.data.ReminderFrequency
 import com.example.modernandroidapp.data.ConsignmentItem
@@ -40,6 +42,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.scale
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.border
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,111 +65,190 @@ fun AddConsignmentScreen(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        item {
-            // Modern Header
-            Column(
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                Text(
-                    text = "New Consignment",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+    Scaffold(
+        containerColor = Color(0xFFF9FAFB),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Add Consignment",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF9FAFB))
+                .padding(horizontal = 16.dp)
+                .padding(top = padding.calculateTopPadding()),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Customer Name",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+            OutlinedTextField(
+                value = customerName,
+                onValueChange = { viewModel.onCustomerNameChange(it) },
+                label = { Text("Enter customer name", fontSize = 14.sp, color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4F46E5),
+                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+            Text(
+                text = "Items",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+            items.forEachIndexed { index, item ->
+                AddConsignmentItemCard(
+                    item = item,
+                    onItemChange = { viewModel.onItemChange(index, it) },
+                    onRemove = { viewModel.removeItem(index) },
+                    canRemove = items.size > 1
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Add customer details and items",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
-        }
-        
-        item {
-            // Customer Name Section
-            ModernSectionCard(
-                title = "Customer Information",
-                icon = Icons.Filled.Person
+            OutlinedButton(
+                onClick = { viewModel.addItem() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color(0xFFE0E7FF),
+                    contentColor = Color(0xFF4F46E5)
+                )
             ) {
-                OutlinedTextField(
-                    value = customerName,
-                    onValueChange = { viewModel.onCustomerNameChange(it) },
-                    label = { Text("Customer Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add Item", style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            if (validationError != null) {
+                Text(
+                    text = validationError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
+            Button(
+                onClick = { viewModel.onSubmit() },
+                enabled = customerName.isNotBlank() && items.isNotEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+            ) {
+                Icon(Icons.Filled.Check, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Submit Consignment", style = MaterialTheme.typography.bodyLarge.copy(color = Color.White))
+            }
         }
-        
-        item {
-            // Items Section Header
+    }
+}
+
+@Composable
+fun AddConsignmentItemCard(
+    item: ConsignmentItem,
+    onItemChange: (ConsignmentItem) -> Unit,
+    onRemove: () -> Unit,
+    canRemove: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (canRemove) {
+                    IconButton(onClick = onRemove) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Remove Item", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = item.itemName,
+                onValueChange = { onItemChange(item.copy(itemName = it)) },
+                label = { Text("Item Name", fontSize = 14.sp, color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4F46E5),
+                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = item.description,
+                onValueChange = { onItemChange(item.copy(description = it)) },
+                label = { Text("Description (optional)", fontSize = 12.sp, color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4F46E5),
+                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(top = 8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Inventory,
-                    contentDescription = "Items",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Text("Quantity:", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Items",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                IconButton(
+                    onClick = { if (item.quantity > 1) onItemChange(item.copy(quantity = item.quantity - 1)) },
+                    enabled = item.quantity > 1,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(Icons.Filled.Remove, contentDescription = "Decrease", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                }
+                Box(
+                    modifier = Modifier
+                        .height(36.dp)
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = item.quantity.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                IconButton(
+                    onClick = { onItemChange(item.copy(quantity = item.quantity + 1)) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Increase", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                }
             }
-        }
-        
-        itemsIndexed(items) { index, item ->
-            ModernItemForm(
-                item = item,
-                onItemChange = { viewModel.onItemChange(index, it) },
-                onRemove = { viewModel.removeItem(index) },
-                canRemove = items.size > 1
-            )
-        }
-        
-        item {
-            // Add Item Button
-            ModernPillButton(
-                onClick = { viewModel.addItem() },
-                text = "Add Item",
-                icon = Icons.Filled.Add,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        
-        // Validation Error
-        if (validationError != null) {
-            item {
-                ModernErrorCard(error = validationError)
-            }
-        }
-        
-        item {
-            // Submit Button
-            ModernPillButton(
-                onClick = { viewModel.onSubmit() },
-                text = "Create Consignment",
-                icon = Icons.Filled.Check,
-                enabled = customerName.isNotBlank() && items.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
-                isPrimary = true
-            )
+            // Reminder Frequency Dropdown (optional, can be added here if needed)
         }
     }
 }

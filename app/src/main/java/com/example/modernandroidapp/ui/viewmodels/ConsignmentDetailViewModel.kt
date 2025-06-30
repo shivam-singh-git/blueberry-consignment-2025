@@ -130,6 +130,24 @@ class ConsignmentDetailViewModel @Inject constructor(
         _hasUnsavedChanges.value = true
     }
     
+    fun updateItem(itemIndex: Int, newName: String, newDescription: String, newQuantity: Int) {
+        val currentConsignment = _consignment.value ?: return
+        val updatedItems = currentConsignment.items.toMutableList()
+        val item = updatedItems[itemIndex]
+        val validQuantity = newQuantity.coerceAtLeast(1)
+        val newDeliveredQuantity = item.deliveredQuantity.coerceAtMost(validQuantity)
+        updatedItems[itemIndex] = item.copy(
+            itemName = newName,
+            description = newDescription,
+            quantity = validQuantity,
+            deliveredQuantity = newDeliveredQuantity,
+            delivered = newDeliveredQuantity == validQuantity
+        )
+        val updatedConsignment = currentConsignment.copy(items = updatedItems)
+        _consignment.value = updatedConsignment
+        _hasUnsavedChanges.value = true
+    }
+    
     fun saveConsignment() {
         saveChanges()
     }

@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,7 +34,7 @@ fun StaffDashboardScreen(
                 actions = {
                     IconButton(onClick = onLogout) {
                         Icon(
-                            imageVector = Icons.Default.Logout,
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
                             contentDescription = "Logout"
                         )
                     }
@@ -144,7 +147,7 @@ private val staffFeatures = listOf(
     StaffFeature(
         "Task Management",
         "View and manage assigned tasks",
-        Icons.Default.Assignment
+        Icons.AutoMirrored.Filled.Assignment
     ),
     StaffFeature(
         "Time Tracking",
@@ -159,7 +162,7 @@ private val staffFeatures = listOf(
     StaffFeature(
         "Communication",
         "Send messages and notifications",
-        Icons.Default.Message
+        Icons.AutoMirrored.Filled.Message
     ),
     StaffFeature(
         "Profile Settings",

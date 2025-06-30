@@ -167,7 +167,6 @@ fun ModernConsignmentCard(
 fun ModernStatusBadge(consignment: com.example.modernandroidapp.data.Consignment) {
     val isCompleted = consignment.items.all { it.delivered }
     val completedItems = consignment.items.count { it.delivered }
-    val totalItems = consignment.items.size
     
     val statusInfo = when {
         isCompleted -> StatusInfo(
@@ -250,19 +249,25 @@ fun ModernProgressIndicator(consignment: com.example.modernandroidapp.data.Consi
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp),
-            shape = RoundedCornerShape(3.dp),
+                .height(8.dp),
+            shape = RoundedCornerShape(4.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
-            Box {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(progress),
-                    shape = RoundedCornerShape(3.dp),
-                    color = MaterialTheme.colorScheme.primary
-                ) {}
-            }
+            val animatedProgress by animateFloatAsState(
+                targetValue = progress,
+                animationSpec = spring(),
+                label = "progress"
+            )
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedProgress)
+                    .fillMaxHeight()
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+            )
         }
     }
 }
@@ -270,7 +275,7 @@ fun ModernProgressIndicator(consignment: com.example.modernandroidapp.data.Consi
 @Composable
 fun ModernItemsPreview(items: List<com.example.modernandroidapp.data.ConsignmentItem>) {
     Column {
-        items.forEach { item ->
+        items.forEachIndexed { _, item ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -297,76 +302,65 @@ fun ModernItemsPreview(items: List<com.example.modernandroidapp.data.Consignment
 }
 
 @Composable
-fun ModernLoadingIndicator() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Modern shimmer loading
-        repeat(3) { index ->
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 3.dp
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun ModernEmptyState() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 60.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Surface(
-            modifier = Modifier.size(80.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant
+        Icon(
+            imageVector = Icons.Filled.Inventory,
+            contentDescription = "No consignments",
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.surfaceVariant
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "No Active Consignments",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "When a new consignment is added, it will show up here.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        )
+    }
+}
+
+@Composable
+fun ModernStatsCard(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Inventory,
-                    contentDescription = "No consignments",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp)
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "No active consignments",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Add a new consignment to get started",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
     }
 } 
